@@ -1,0 +1,14 @@
+{
+    "Comment": "A state machine that uses .sync .",
+    "StartAt": "Call CodeBuild",
+    "States": {
+        "Call CodeBuild": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::codebuild:startBuild.sync",
+            "Parameters": {
+                "ProjectName": "${projectName}"
+            },
+            "End": true
+        }
+    }
+}
