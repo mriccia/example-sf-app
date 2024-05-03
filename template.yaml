@@ -47,6 +47,26 @@ Resources:
               commands:
                 - echo 'Empty BuildSpec'
 
+`  WrapperStateMachineSync:
+    Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
+    Properties:
+      DefinitionUri: statemachine/wrapper_asl.json
+      DefinitionSubstitutions:
+        stateMachineArn: !Ref SampleCodeBuildStepMachine
+      Policies:
+        - Statement:
+            - Sid: InvokeStepFunction
+              Effect: Allow
+              Action:
+                - "states:StartExecution"
+              Resource: !Ref SampleCodeBuildStepMachine
+            - Sid: PutRuleonEventBridge
+              Effect: Allow
+              Action:
+                - "events:PutTargets"
+                - "events:PutRule"
+                - "events:DescribeRule"
+              Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule"
   SampleCodeBuildStepMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
@@ -70,6 +90,50 @@ Resources:
               - "events:PutRule"
               - "events:DescribeRule"
             Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventForCodeBuildStartBuildRule"
+
+
+  WrapperWithWaitStateMachine:
+    Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
+    Properties:
+      DefinitionUri: statemachine/wrapper_waitForTaskToken_asl.json
+      DefinitionSubstitutions:
+        stateMachineArn: !Ref SampleCodeBuildWithCallbackStepMachine
+      Policies:
+        - Statement:
+            - Sid: InvokeStepFunction
+              Effect: Allow
+              Action:
+                - "states:StartExecution"
+              Resource: !Ref SampleCodeBuildWithCallbackStepMachine
+
+  SampleCodeBuildWithCallbackStepMachine:
+    Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
+    Properties:
+      DefinitionUri: statemachine/codebuild_example_withToken_asl.json
+      DefinitionSubstitutions:
+        projectName: !Ref CodeBuildProject
+      Policies:
+        - Statement:
+          - Sid: InvokeCodeBuildPolicy
+            Effect: Allow
+            Action:
+              - "codebuild:StartBuild"
+              - "codebuild:StopBuild"
+              - "codebuild:BatchGetBuilds"
+              - "codebuild:BatchGetReports"
+            Resource: !GetAtt CodeBuildProject.Arn
+          - Sid: PutRuleonEventBridge
+            Effect: Allow
+            Action:
+              - "events:PutTargets"
+              - "events:PutRule"
+              - "events:DescribeRule"
+            Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventForCodeBuildStartBuildRule"
+          - Sid: SendSuccess
+            Effect: Allow
+            Action:
+              - "states:sendTaskSuccess"
+            Resource: "*"
 
 
 Outputs:
