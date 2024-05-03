@@ -47,7 +47,7 @@ Resources:
               commands:
                 - echo 'Empty BuildSpec'
 
-`  WrapperStateMachineSync:
+  WrapperStateMachineSync:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
       DefinitionUri: statemachine/wrapper_asl.json
